@@ -21,3 +21,7 @@ def get_product(product_id: int):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/api/products/search")
+def search_products(name: str = ""):
+    return [p for p in products if name.lower() in p["name"].lower()]

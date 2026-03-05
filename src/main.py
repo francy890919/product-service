@@ -18,10 +18,10 @@ def get_product(product_id: int):
             return p
     return {"error": "Product not found"}
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
 @app.get("/api/products/search")
 def search_products(name: str = ""):
     return [p for p in products if name.lower() in p["name"].lower()]
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "product-service", "version": "1.0.1"}

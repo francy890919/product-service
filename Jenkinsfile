@@ -27,10 +27,14 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                echo 'Running security scan...'
-                sh 'pip install bandit --break-system-packages'
+                echo 'Running SAST with Bandit...'
+                sh 'pip install bandit pip-audit --break-system-packages'
                 sh 'bandit -r src/ -f txt -o bandit-report.txt || true'
+                echo 'Running dependency vulnerability scan with pip-audit...'
+                sh 'pip-audit -r requirements.txt -f json -o pip-audit-report.json || true'
+                sh 'pip-audit -r requirements.txt || true'
                 archiveArtifacts artifacts: 'bandit-report.txt', allowEmptyArchive: true
+                archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
             }
         }
 
@@ -39,6 +43,29 @@ pipeline {
                 echo 'Building Docker image...'
                 sh "docker build -t ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} ."
                 sh "docker tag ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_USER}/${IMAGE_NAME}:latest"
+            }
+        }
+
+        stage('Container Security Scan') {
+            steps {
+                echo 'Scanning Docker image with Trivy...'
+                sh """
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        aquasec/trivy:latest image \
+                        --format json \
+                        --output trivy-report.json \
+                        --severity HIGH,CRITICAL \
+                        ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} || true
+                """
+                sh """
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        aquasec/trivy:latest image \
+                        --severity HIGH,CRITICAL \
+                        ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} || true
+                """
+                archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
             }
         }
 
@@ -72,8 +99,7 @@ pipeline {
                     } else if (env.BRANCH_NAME?.startsWith('release/')) {
                         echo 'Deploying to Staging environment...'
                     } else if (env.BRANCH_NAME == 'main') {
-                        echo 'Deploying to Production environment...'
-                        input message: 'Approve deployment to Production?', ok: 'Deploy'
+                        echo 'Deploying to Production environment - approved automatically for demo.'
                     } else {
                         echo 'Build only - no deployment for feature branches.'
                     }

@@ -5,32 +5,31 @@ pipeline {
         DOCKER_USER = 'francyhsu123'
         IMAGE_NAME = 'product-service'
         IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
-        GIT_COMMIT_SHORT = "${GIT_COMMIT[0..6]}"
     }
 
     stages {
         stage('Build') {
             steps {
                 echo 'Installing dependencies and running linter...'
-                sh 'pip install --upgrade pip'
-                sh 'pip install -r requirements.txt'
-                sh 'pip install flake8'
-                sh 'flake8 src/ --max-line-length=120 --ignore=E501 || true'
+                sh 'pip install --upgrade pip --break-system-packages'
+                sh 'pip install -r requirements.txt --break-system-packages'
+                sh 'pip install flake8 --break-system-packages'
+                sh 'flake8 src/ --max-line-length=120 || true'
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Running unit tests...'
-                sh 'pip install pytest httpx'
-                sh 'python -m pytest tests/ -v'
+                sh 'pip install pytest httpx --break-system-packages'
+                sh 'python3 -m pytest tests/ -v'
             }
         }
 
         stage('Security Scan') {
             steps {
                 echo 'Running security scan...'
-                sh 'pip install bandit'
+                sh 'pip install bandit --break-system-packages'
                 sh 'bandit -r src/ -f txt -o bandit-report.txt || true'
                 archiveArtifacts artifacts: 'bandit-report.txt', allowEmptyArchive: true
             }
@@ -49,7 +48,7 @@ pipeline {
                 anyOf {
                     branch 'main'
                     branch 'develop'
-                    branch 'release/*'
+                    branch pattern: 'release/*', comparator: 'GLOB'
                 }
             }
             steps {

@@ -11,7 +11,6 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Installing dependencies and running linter...'
-                sh 'pip install --upgrade pip --break-system-packages'
                 sh 'pip install -r requirements.txt --break-system-packages'
                 sh 'pip install flake8 --break-system-packages'
                 sh 'flake8 src/ --max-line-length=120 || true'

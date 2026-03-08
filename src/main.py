@@ -26,3 +26,6 @@ def search_products(name: str = ""):
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "product-service", "version": "1.1.0"}
+
+
+# Added new product

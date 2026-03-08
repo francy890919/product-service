@@ -5,6 +5,7 @@ app = FastAPI(title="Product Service")
 products = [
     {"id": 1, "name": "Laptop", "price": 999.00},
     {"id": 2, "name": "Mouse", "price": 29.00},
+    {"id": 3, "name": "Keyboard", "price": 79.00},
 ]
 
 @app.get("/api/products")
@@ -24,4 +25,7 @@ def search_products(name: str = ""):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "product-service", "version": "1.0.1"}
+    return {"status": "ok", "service": "product-service", "version": "1.1.0"}
+
+
+# Added new product
